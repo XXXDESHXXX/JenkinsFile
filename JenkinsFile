@@ -10,26 +10,8 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Клонирование репозитория
-                git credentialsId: 'GitHub', url: 'https://github.com/XXXDESHXXXX/TasksFromPlaysDev.git'
+                sh 'git clone https://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@github.com/XXXDESHXXX/TasksFromPlaysDev.git'
             }
-        }
-
-        stage('Build Nginx Image') {
-            steps {
-                script {
-                    // Сборка Nginx образа
-                    sh 'docker build -t $DOCKER_IMAGE_NGINX -f ./Docker/Nginx_Conf/Task12/Dockerfile .'
-                }
-            }
-        }
-
-        stage('Build Apache Image') {
-            steps {
-                script {
-                    // Сборка Apache образа
-                    sh 'docker build -t $DOCKER_IMAGE_APACHE -f ./Docker/Apache_Conf/Dockerfile .'
-                }
-            }
-        }
-    }
+       }
+   }
 }
