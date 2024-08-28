@@ -9,6 +9,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+		sh 'rm -rf TasksFromPlaysDev'
                 // Клонирование репозитория
                 sh 'git clone https:/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@github.com/XXXDESHXXXX/TasksFromPlaysDev.git'
             }
