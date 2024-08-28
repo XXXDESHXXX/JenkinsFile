@@ -1,38 +1,26 @@
 pipeline {
     agent any
+    
+    environment {
+        DOCKER_HUB_USERNAME = "xxxdeshxxx"
+        DOCKER_HUB_PASSWORD = "dckr_pat_35qTkJ-d_a2wOqKDY49HK0JarEw"
+    }
 
     stages {
-        stage('Pull Images from Docker Hub') {
+        stage('Login to Docker Hub') {
             steps {
                 script {
-                    // Загрузка Nginx образа с Docker Hub
-                    sh 'docker pull xxxdeshxxx/custom-nginx'
-                    
-                    // Загрузка Apache образа с Docker Hub
+                    // Аутентификация в Docker Hub
+                    sh 'echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin'
+                }
+            }
+        }
+
+        stage('Pull Apache Image from Docker Hub') {
+            steps {
+                script {
+                    // Загружаем последнюю версию Apache из Docker Hub
                     sh 'docker pull xxxdeshxxx/custom-apache'
-                }
-            }
-        }
-        
-        stage('Create Docker Network') {
-            steps {
-                script {
-                    // Создаем сеть если она не создана
-                    sh '''
-                    docker network inspect my_network >/dev/null 2>&1 || \
-                    docker network create my_network
-                    '''
-                }
-            }
-        }
-        
-        stage('Run Nginx Container') {
-            steps {
-                script {
-                    // Запускаем контейнер на основе Nginx образа
-                    sh '''
-                    docker run -d --name custom-nginx --network my_network -p 80:80 xxxdeshxxx/custom-nginx
-                    '''
                 }
             }
         }
@@ -40,25 +28,57 @@ pipeline {
         stage('Run Apache Container') {
             steps {
                 script {
-                    // Запускаем контейнер на основе Apache образа
+                    // Проверяем и перезапускаем контейнер Apache
                     sh '''
+                    docker stop custom-apache || true
+                    docker rm custom-apache || true
                     docker run -d --name custom-apache --network my_network -p 8083:8083 xxxdeshxxx/custom-apache
                     '''
                 }
             }
         }
+
+        stage('Pull Nginx Image from Docker Hub') {
+            steps {
+                script {
+                    // Загружаем последнюю версию Nginx из Docker Hub
+                    sh 'docker pull xxxdeshxxx/custom-nginx'
+                }
+            }
+        }
+
+        stage('Run Nginx Container') {
+            steps {
+                script {
+                    // Проверяем и перезапускаем контейнер Nginx после Apache
+                    sh '''
+                    docker stop custom-nginx || true
+                    docker rm custom-nginx || true
+                    docker run -d --name custom-nginx --network my_network -p 80:80 xxxdeshxxx/custom-nginx
+                    '''
+                }
+            }
+        }
+
+        stage('Cleanup Old Docker Images') {
+            steps {
+                script {
+                    // Удаляем все неиспользуемые Docker образы, чтобы избежать переполнения
+                    sh 'docker image prune -f'
+                }
+            }
+        }
     }
-    
+
     post {
         always {
             echo 'Pipeline finished!'
         }
         success {
-            echo 'Containers deployed successfully!'
+            echo 'Images updated and containers redeployed!'
         }
         failure {
             echo 'Pipeline failed!'
         }
     }
 }
-
