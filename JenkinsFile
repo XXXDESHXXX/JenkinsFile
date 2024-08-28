@@ -4,15 +4,59 @@ pipeline {
     environment {
         DOCKER_IMAGE_NGINX = "xxxdeshxxx/custom-nginx"
         DOCKER_IMAGE_APACHE = "xxxdeshxxx/custom-apache"
+        NETWORK_NAME = "my_network"
     }
 
     stages {
         stage('Checkout') {
             steps {
-		sh 'rm -rf TasksFromPlaysDev'
-                // Клонирование репозитория
+                // Удаляем старый код и клонируем новый
+                sh 'rm -rf TasksFromPlaysDev'
                 sh 'git clone https://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@github.com/XXXDESHXXX/TasksFromPlaysDev.git'
             }
-       }
-   }
+        }
+
+        stage('Build Nginx Image') {
+            steps {
+                script {
+                    // Построение образа Nginx
+                    sh "docker build -t ${DOCKER_IMAGE_NGINX} -f /opt/TasksFromPlaysDev/Docker/Nginx_Conf/Task12/Dockerfile ."
+                }
+            }
+        }
+
+        stage('Build Apache Image') {
+            steps {
+                script {
+                    // Построение образа Apache
+                    sh "docker build -t ${DOCKER_IMAGE_APACHE} -f /opt/TasksFromPlaysDev/Docker/Apache_Conf/Dockerfile ."
+                }
+            }
+        }
+
+        stage('Create Network') {
+            steps {
+                script {
+                    // Создание Docker-сети, если она не существует
+                    sh "docker network inspect ${NETWORK_NAME} > /dev/null 2>&1 || docker network create ${NETWORK_NAME}"
+                }
+            }
+        }
+
+        stage('Deploy Containers') {
+            steps {
+                script {
+                    // Удаление старых контейнеров, если они существуют
+                    sh "docker rm -f custom-nginx custom-apache || true"
+
+                    // Запуск контейнеров с указанными параметрами
+                    sh """
+                    docker run -d --name custom-apache --network ${NETWORK_NAME} -p 8083:8083 ${DOCKER_IMAGE_APACHE}
+                    docker run -d --name custom-nginx --network ${NETWORK_NAME} -p 80:80 ${DOCKER_IMAGE_NGINX}
+                    """
+                }
+            }
+        }
+    }
 }
+
