@@ -10,7 +10,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 // Клонирование репозитория
-                sh 'git clone https://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@github.com/XXXDESHXXX/TasksFromPlaysDev.git'
+                git credentialsId: 'GitHub', url: 'git@github.com:XXXDESHXXX/TasksFromPlaysDev.git'
             }
        }
    }
