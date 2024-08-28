@@ -1,10 +1,34 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_IMAGE_NGINX = "xxxdeshxxx/custom-nginx"
+        DOCKER_IMAGE_APACHE = "xxxdeshxxx/custom-apache"
+    }
+
     stages {
-        stage('Hello') {
+        stage('Checkout') {
             steps {
-                echo 'Hello, World!'
+                // Клонирование репозитория
+                git 'https://github.com/XXXDESHXXXX/TasksFromPlaysDev.git'
+            }
+        }
+
+        stage('Build Nginx Image') {
+            steps {
+                script {
+                    // Сборка Nginx образа
+                    sh 'docker build -t $DOCKER_IMAGE_NGINX -f ./Docker/Nginx_Conf/Task12/Dockerfile .'
+                }
+            }
+        }
+
+        stage('Build Apache Image') {
+            steps {
+                script {
+                    // Сборка Apache образа
+                    sh 'docker build -t $DOCKER_IMAGE_APACHE -f ./Docker/Apache_Conf/Dockerfile .'
+                }
             }
         }
     }
