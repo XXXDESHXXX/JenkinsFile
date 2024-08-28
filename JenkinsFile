@@ -1,61 +1,63 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_IMAGE_NGINX = "xxxdeshxxx/custom-nginx"
-        DOCKER_IMAGE_APACHE = "xxxdeshxxx/custom-apache"
-        NETWORK_NAME = "my_network"
-    }
-
     stages {
-        stage('Checkout') {
-            steps {
-                // Удаляем старый код и клонируем новый
-                sh 'rm -rf TasksFromPlaysDev'
-                sh 'git clone https://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@github.com/XXXDESHXXX/TasksFromPlaysDev.git'
-            }
-        }
-
-        stage('Build Nginx Image') {
+        stage('Pull Images from Docker Hub') {
             steps {
                 script {
-                    // Построение образа Nginx
-                    sh "docker build -t ${DOCKER_IMAGE_NGINX} -f /opt/TasksFromPlaysDev/Docker/Nginx_Conf/Task12/Dockerfile ."
+                    // Загрузка Nginx образа с Docker Hub
+                    sh 'docker pull xxxdeshxxx/custom-nginx'
+                    
+                    // Загрузка Apache образа с Docker Hub
+                    sh 'docker pull xxxdeshxxx/custom-apache'
+                }
+            }
+        }
+        
+        stage('Create Docker Network') {
+            steps {
+                script {
+                    // Создаем сеть если она не создана
+                    sh '''
+                    docker network inspect my_network >/dev/null 2>&1 || \
+                    docker network create my_network
+                    '''
+                }
+            }
+        }
+        
+        stage('Run Nginx Container') {
+            steps {
+                script {
+                    // Запускаем контейнер на основе Nginx образа
+                    sh '''
+                    docker run -d --name custom-nginx --network my_network -p 80:80 xxxdeshxxx/custom-nginx
+                    '''
                 }
             }
         }
 
-        stage('Build Apache Image') {
+        stage('Run Apache Container') {
             steps {
                 script {
-                    // Построение образа Apache
-                    sh "docker build -t ${DOCKER_IMAGE_APACHE} -f /opt/TasksFromPlaysDev/Docker/Apache_Conf/Dockerfile ."
+                    // Запускаем контейнер на основе Apache образа
+                    sh '''
+                    docker run -d --name custom-apache --network my_network -p 8083:8083 xxxdeshxxx/custom-apache
+                    '''
                 }
             }
         }
-
-        stage('Create Network') {
-            steps {
-                script {
-                    // Создание Docker-сети, если она не существует
-                    sh "docker network inspect ${NETWORK_NAME} > /dev/null 2>&1 || docker network create ${NETWORK_NAME}"
-                }
-            }
+    }
+    
+    post {
+        always {
+            echo 'Pipeline finished!'
         }
-
-        stage('Deploy Containers') {
-            steps {
-                script {
-                    // Удаление старых контейнеров, если они существуют
-                    sh "docker rm -f custom-nginx custom-apache || true"
-
-                    // Запуск контейнеров с указанными параметрами
-                    sh """
-                    docker run -d --name custom-apache --network ${NETWORK_NAME} -p 8083:8083 ${DOCKER_IMAGE_APACHE}
-                    docker run -d --name custom-nginx --network ${NETWORK_NAME} -p 80:80 ${DOCKER_IMAGE_NGINX}
-                    """
-                }
-            }
+        success {
+            echo 'Containers deployed successfully!'
+        }
+        failure {
+            echo 'Pipeline failed!'
         }
     }
 }
