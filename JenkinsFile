@@ -10,7 +10,7 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    // Аутентификация в Docker Hub
+                    
                     sh 'echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin'
                 }
             }
@@ -19,7 +19,7 @@ pipeline {
         stage('Pull Apache Image from Docker Hub') {
             steps {
                 script {
-                    // Загружаем последнюю версию Apache из Docker Hub
+                    
                     sh 'docker pull xxxdeshxxx/custom-apache'
                 }
             }
@@ -28,7 +28,7 @@ pipeline {
         stage('Run Apache Container') {
             steps {
                 script {
-                    // Проверяем и перезапускаем контейнер Apache
+                    
                     sh '''
                     docker stop custom-apache || true
                     docker rm custom-apache || true
@@ -38,11 +38,28 @@ pipeline {
             }
         }
 
+        stage('Push Apache Image to Docker Hub') {
+            steps {
+                script {
+                    
+                    sh 'docker push xxxdeshxxx/custom-apache'
+                }
+            }
+        }
         stage('Pull Nginx Image from Docker Hub') {
             steps {
                 script {
-                    // Загружаем последнюю версию Nginx из Docker Hub
+                    
                     sh 'docker pull xxxdeshxxx/custom-nginx'
+                }
+            }
+        }
+
+        stage('Push Nginx Image to Docker Hub') {
+            steps {
+                script {
+                    
+                    sh 'docker push xxxdeshxxx/custom-nginx'
                 }
             }
         }
@@ -50,7 +67,7 @@ pipeline {
         stage('Run Nginx Container') {
             steps {
                 script {
-                    // Проверяем и перезапускаем контейнер Nginx после Apache
+                    
                     sh '''
                     docker stop custom-nginx || true
                     docker rm custom-nginx || true
@@ -63,22 +80,9 @@ pipeline {
         stage('Cleanup Old Docker Images') {
             steps {
                 script {
-                    // Удаляем все неиспользуемые Docker образы, чтобы избежать переполнения
                     sh 'docker image prune -f'
                 }
             }
-        }
-    }
-
-    post {
-        always {
-            echo 'Pipeline finished!'
-        }
-        success {
-            echo 'Images updated and containers redeployed!'
-        }
-        failure {
-            echo 'Pipeline failed!'
         }
     }
 }
