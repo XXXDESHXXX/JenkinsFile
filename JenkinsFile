@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        GIT_REPO = 'git@github.com:XXXDESHXXX/TasksFromPlaysDev.git'
         APACHE_DOCKERFILE_PATH = '/opt/TasksFromPlaysDev/Docker/Apache_Conf/Dockerfile'
         NGINX_DOCKERFILE_PATH = '/opt/TasksFromPlaysDev/Docker/Nginx_Conf/Task12/Dockerfile'
     }
@@ -12,7 +11,7 @@ pipeline {
         stage('Clone Repository from GitHub') {
             steps {
                 script {
-                    git branch: 'main', credentialsId: 'SSHGit', url: GIT_REPO
+                    git branch: 'main', credentialsId: 'SSHGit', url: 'git@github.com:XXXDESHXXX/TasksFromPlaysDev.git'
                 }
             }
         }
