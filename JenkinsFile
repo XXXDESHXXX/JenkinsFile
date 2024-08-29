@@ -1,82 +1,112 @@
 pipeline {
     agent any
-    
+
     environment {
-        DOCKER_HUB_USERNAME = "xxxdeshxxx"
-        DOCKER_HUB_PASSWORD = "dckr_pat_35qTkJ-d_a2wOqKDY49HK0JarEw"
+        GIT_REPO = 'git@github.com:XXXDESHXXX/TasksFromPlaysDev.git'
+        APACHE_DOCKERFILE_PATH = '/opt/TasksFromPlaysDev/Docker/Apache_Conf/Dockerfile'
+        NGINX_DOCKERFILE_PATH = '/opt/TasksFromPlaysDev/Docker/Nginx_Conf/Task12/Dockerfile'
     }
 
     stages {
+        // Клонируем репозиторий с GitHub
+        stage('Clone Repository from GitHub') {
+            steps {
+                script {
+                    git branch: 'main', credentialsId: 'SSHGit', url: GIT_REPO
+                }
+            }
+        }
+        
+        // Логинимся в Docker Hub
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    
-                    sh 'echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin'
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_HUB_PASSWORD', usernameVariable: 'DOCKER_HUB_USERNAME')]) {
+                        sh 'echo $DOCKER_HUB_PASSWORD | docker login -u $DOCKER_HUB_USERNAME --password-stdin'
+                    }
                 }
             }
         }
 
-        stage('Pull Apache Image from Docker Hub') {
+        // Сборка Docker образа Apache
+        stage('Build Apache Docker Image with Tag') {
             steps {
                 script {
+                    def apacheImageTag = "xxxdeshxxx/custom-apache:${env.BUILD_ID}"
                     
-                    sh 'docker pull xxxdeshxxx/custom-apache'
+                    // Собираем Docker образ для Apache
+                    sh """
+                    docker build -t ${apacheImageTag} -f ${APACHE_DOCKERFILE_PATH} .
+                    """
+                    
+                    // Сохраняем тег Apache образа для дальнейшего использования
+                    env.APACHE_IMAGE_TAG = apacheImageTag
                 }
             }
         }
 
+        // Сборка Docker образа Nginx
+        stage('Build Nginx Docker Image with Tag') {
+            steps {
+                script {
+                    def nginxImageTag = "xxxdeshxxx/custom-nginx:${env.BUILD_ID}"
+                    
+                    // Собираем Docker образ для Nginx
+                    sh """
+                    docker build -t ${nginxImageTag} -f ${NGINX_DOCKERFILE_PATH} .
+                    """
+                    
+                    // Сохраняем тег Nginx образа для дальнейшего использования
+                    env.NGINX_IMAGE_TAG = nginxImageTag
+                }
+            }
+        }
+
+        // Запуск контейнера Apache
         stage('Run Apache Container') {
             steps {
                 script {
-                    
-                    sh '''
+                    sh """
                     docker stop custom-apache || true
                     docker rm custom-apache || true
-                    docker run -d --name custom-apache --network my_network -p 8083:8083 xxxdeshxxx/custom-apache
-                    '''
+                    docker run -d --name custom-apache --network my_network -p 8083:8083 ${env.APACHE_IMAGE_TAG}
+                    """
                 }
             }
         }
 
-        stage('Push Apache Image to Docker Hub') {
-            steps {
-                script {
-                    
-                    sh 'docker push xxxdeshxxx/custom-apache'
-                }
-            }
-        }
-        stage('Pull Nginx Image from Docker Hub') {
-            steps {
-                script {
-                    
-                    sh 'docker pull xxxdeshxxx/custom-nginx'
-                }
-            }
-        }
-
-        stage('Push Nginx Image to Docker Hub') {
-            steps {
-                script {
-                    
-                    sh 'docker push xxxdeshxxx/custom-nginx'
-                }
-            }
-        }
-
+        // Запуск контейнера Nginx
         stage('Run Nginx Container') {
             steps {
                 script {
-                    
-                    sh '''
+                    sh """
                     docker stop custom-nginx || true
                     docker rm custom-nginx || true
-                    docker run -d --name custom-nginx --network my_network -p 80:80 xxxdeshxxx/custom-nginx
-                    '''
+                    docker run -d --name custom-nginx --network my_network -p 80:80 ${env.NGINX_IMAGE_TAG}
+                    """
                 }
             }
         }
 
+        // Пушим Apache образ в Docker Hub
+        stage('Push Apache Image to Docker Hub') {
+            steps {
+                script {
+                    sh "docker push ${env.APACHE_IMAGE_TAG}"
+                }
+            }
+        }
+
+        // Пушим Nginx образ в Docker Hub
+        stage('Push Nginx Image to Docker Hub') {
+            steps {
+                script {
+                    sh "docker push ${env.NGINX_IMAGE_TAG}"
+                }
+            }
+        }
+
+        // Очистка старых Docker образов
         stage('Cleanup Old Docker Images') {
             steps {
                 script {
