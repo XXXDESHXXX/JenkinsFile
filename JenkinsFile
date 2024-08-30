@@ -11,7 +11,7 @@ pipeline {
         stage('Clone Repository from GitHub') {
             steps {
                 script {
-                    git branch: 'main', credentialsId: 'SSHGit', url: 'git@github.com:XXXDESHXXX/TasksFromPlaysDev.git'
+                    git branch: 'main', credentialsId: 'GitHubSSH', url: 'git@github.com:XXXDESHXXX/TasksFromPlaysDev.git'
                 }
             }
         }
