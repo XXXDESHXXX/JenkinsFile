@@ -35,7 +35,7 @@ pipeline {
                     
                     // Собираем Docker образ для Apache
                     sh """
-                    docker build -t ${apacheImageTag} -f ${APACHE_DOCKERFILE_PATH} .
+                    docker build -t ${apacheImageTag} -f ${APACHE_DOCKERFILE_PATH} /opt/TasksFromPlaysDev/Docker/Apache_Conf/
                     """
                     
                     // Сохраняем тег Apache образа для дальнейшего использования
@@ -52,7 +52,7 @@ pipeline {
                     
                     // Собираем Docker образ для Nginx
                     sh """
-                    docker build -t ${nginxImageTag} -f ${NGINX_DOCKERFILE_PATH} .
+                    docker build -t ${nginxImageTag} -f ${NGINX_DOCKERFILE_PATH} /opt/TasksFromPlaysDev/Docker/Nginx_Conf/Task12/
                     """
                     
                     // Сохраняем тег Nginx образа для дальнейшего использования
