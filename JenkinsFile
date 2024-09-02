@@ -7,7 +7,6 @@ pipeline {
     }
 
     stages {
-        // Клонируем репозиторий с GitHub
         stage('Clone Repository from GitHub') {
             steps {
                 script {
@@ -16,7 +15,6 @@ pipeline {
             }
         }
         
-        // Логинимся в Docker Hub
         stage('Login to Docker Hub') {
             steps {
                 script {
@@ -26,42 +24,34 @@ pipeline {
                 }
             }
         }
-
-        // Сборка Docker образа Apache
         stage('Build Apache Docker Image with Tag') {
             steps {
                 script {
                     def apacheImageTag = "xxxdeshxxx/custom-apache:${env.BUILD_ID}"
                     
-                    // Собираем Docker образ для Apache
                     sh """
                     docker build -t ${apacheImageTag} -f ${APACHE_DOCKERFILE_PATH} /opt/TasksFromPlaysDev/Docker/Apache_Conf/
                     """
                     
-                    // Сохраняем тег Apache образа для дальнейшего использования
                     env.APACHE_IMAGE_TAG = apacheImageTag
                 }
             }
         }
 
-        // Сборка Docker образа Nginx
         stage('Build Nginx Docker Image with Tag') {
             steps {
                 script {
                     def nginxImageTag = "xxxdeshxxx/custom-nginx:${env.BUILD_ID}"
-                    
-                    // Собираем Docker образ для Nginx
+                
                     sh """
                     docker build -t ${nginxImageTag} -f ${NGINX_DOCKERFILE_PATH} /opt/TasksFromPlaysDev/Docker/Nginx_Conf/Task12/
                     """
-                    
-                    // Сохраняем тег Nginx образа для дальнейшего использования
+                   
                     env.NGINX_IMAGE_TAG = nginxImageTag
                 }
             }
         }
 
-        // Запуск контейнера Apache
         stage('Run Apache Container') {
             steps {
                 script {
@@ -74,7 +64,6 @@ pipeline {
             }
         }
 
-        // Запуск контейнера Nginx
         stage('Run Nginx Container') {
             steps {
                 script {
@@ -87,7 +76,6 @@ pipeline {
             }
         }
 
-        // Пушим Apache образ в Docker Hub
         stage('Push Apache Image to Docker Hub') {
             steps {
                 script {
@@ -96,7 +84,6 @@ pipeline {
             }
         }
 
-        // Пушим Nginx образ в Docker Hub
         stage('Push Nginx Image to Docker Hub') {
             steps {
                 script {
@@ -104,8 +91,6 @@ pipeline {
                 }
             }
         }
-
-        // Очистка старых Docker образов
         stage('Cleanup Old Docker Images') {
             steps {
                 script {
